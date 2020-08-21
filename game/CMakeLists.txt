@@ -27,6 +27,8 @@ target_link_libraries(game sfml-graphics sfml-window sfml-network)
 target_include_directories(game PRIVATE SFML_DIR)
 
 #configure_file(./../assets/p1.png "./resources/p1.png" COPYONLY)
+add_custom_command(TARGET game PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:game>/assets)
 
-file(GLOB "")
 # TODO: Add tests and install targets if needed.

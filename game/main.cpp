@@ -35,7 +35,7 @@ int main()
     mainWindow( new sf::RenderWindow({ 300, 300 }, "Tic Tac Toe"));
   //Load font
   g_tahoma = new sf::Font();
-  g_tahoma->loadFromFile("C:\\Windows\\Fonts\\Tahoma.ttf");
+  g_tahoma->loadFromFile("./assets/font.ttf");
   // load tile textures
   // insert blank tile.
   tileTextures.push_back(make_shared<sf::Texture>());
