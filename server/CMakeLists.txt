@@ -7,7 +7,9 @@ cmake_minimum_required (VERSION 3.8)
 
 project(server)
 
-#set(SFML_STATIC_LIBRARIES TRUE)
+if(MSVC)
+  set(SFML_STATIC_LIBRARIES TRUE)
+endif(MSVC)
 
 find_package(SFML 2.5 COMPONENTS graphics network window network system REQUIRED)
 
