@@ -1,7 +1,7 @@
 #include "Game.h"
 #include <iostream>
+#include <math.h>
 #include <SFML/Network.hpp>
-#include "windows.h"
 #include "ttt_util.h"
 using namespace std;
 extern float g_fboardWidth;
@@ -37,7 +37,7 @@ void Game::Init(bool newGame)
       m_subboards[loadedPlay.majorPos.x][loadedPlay.majorPos.y].Play(loadedPlay.tile, loadedPlay.minorPos.x, loadedPlay.minorPos.y);
       float currMove = float(m_hist.GetCurrMove());
       float numMoves = float(m_hist.GetNumMoves());
-      float speed = pow(currMove / numMoves, 2);
+      float speed = std::pow(currMove / numMoves, 2);
       sf::sleep(sf::seconds(1 * speed));
       Draw();
       m_running = true;

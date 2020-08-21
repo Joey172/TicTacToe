@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 #include <vector>
 #include <queue>
 #include <list>
@@ -89,7 +90,7 @@ bool handlePacket (Client *client, sf::Packet &packet) {
   packet >> contents;
   cout << " processing packet (size: " << dataSize << "b, type: " << hex << (int)contents << ")..." << endl;
   
-  memcpy_s(data, dataSize, packet.getData(), dataSize);
+  memcpy(data, packet.getData(), dataSize);
   
   { // display data as hex
     cout << "data(hex):";

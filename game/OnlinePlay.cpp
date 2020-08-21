@@ -1,5 +1,6 @@
 #include "OnlinePlay.h"
 #include <iostream>
+#include <memory.h>
 
 using namespace std;
 using sf::Uint8;
@@ -64,7 +65,7 @@ void Server::_RecieveHandler()
   // display raw data as hex
   dataSize = response.getDataSize();
   data = new Uint8[dataSize];
-  memcpy_s(data, dataSize, response.getData(), dataSize);
+  memcpy(data, response.getData(), dataSize);
   cout << " - data(hex):";
   for (size_t i = 0; i < dataSize; i++) {
     cout << hex << (int)data[i] << " ";

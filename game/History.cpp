@@ -1,6 +1,7 @@
 #include "History.h"
 #include <iostream>
 #include <string>
+#include <limits>
 #include "ttt_util.h"
 using namespace std;
 
@@ -19,19 +20,22 @@ void History::logPlay(play_t play)
   if (m_saveFile.is_open()) {
     // convert play to chess-like notationn and save to text file.
 
-    unsigned n = sprintf_s(str, 7, "%c%i%c%i ",
+    //unsigned n = sprintf_s(str, 7, "%c%i%c%i ",
+    //                       'a' + char(play.majorPos.y), play.majorPos.x,
+    //                       'a' + char(play.minorPos.y), play.minorPos.x);
+    unsigned n = snprintf(str, 7, "%c%i%c%i ",
                            'a' + char(play.majorPos.y), play.majorPos.x,
                            'a' + char(play.minorPos.y), play.minorPos.x);
-
+                           
     m_saveFile << str << endl;
     cout << n;
     m_saveFile.flush();
 
     flush(m_saveFile);
     if (m_saveFile.fail()) {
-      char buff[50];
-      strerror_s(buff, 50, errno);
-      cout << "Error: " << buff;
+      //char buff[50];
+      //strerror_s(buff, 50, errno);
+      //cout << "Error: " << buff;
     }
   }
   printf("%c%i %c%i\n", // cout doesn't work for some reason..
@@ -63,7 +67,7 @@ bool History::LoadFromFile(string fileName)
   }
   Tile currTurn = Tile::CROSS;
   while (!m_saveFile.eof()) {
-    play_t loadedMove = { {-1,-1},{-1,-1},Tile::NONE, false };
+    play_t loadedMove = { {0,0},{0,0},Tile::NONE, false };
     string moveEntry;
     unsigned x = 0;
     unsigned y = 0;
@@ -109,7 +113,7 @@ bool History::Init(string fileName)
   m_currMove = 0;
 
   if (!fileName.empty()) {
-    int options = fstream::out;
+    std::ios_base::openmode options = fstream::out;
     options |= fstream::trunc;
     m_saveFile.open(fileName, options);
   }

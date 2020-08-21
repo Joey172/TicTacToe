@@ -1,6 +1,7 @@
 #include "Subboard.h"
 #include <iostream>
 #include <algorithm>
+#include <math.h>
 #include "Game.h"
 using namespace std;
 

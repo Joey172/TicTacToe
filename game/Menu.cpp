@@ -1,6 +1,8 @@
+#include <iostream>
+#include <math.h>
 #include "Menu.h"
 #include "GameSettings.h"
-#include <windows.h>
+using namespace std;
 
 extern unsigned g_boardWidth, g_boardHeight;
 extern float g_fboardWidth;
@@ -139,9 +141,7 @@ settings_t Menu::GetSettings()
 }
 
 
-#include <iostream>
-using namespace std;
-#include <SFML\Network.hpp>
+
 OnlineMenu::OnlineMenu(std::shared_ptr<sf::RenderWindow> gameWin, vector<shared_ptr<sf::Texture>> tileTextures) 
     : m_tileTextures(tileTextures) {
   m_window = gameWin;

@@ -6,7 +6,7 @@ include(CMakePrintHelpers)
 cmake_minimum_required (VERSION 3.8)
 
 project(game)
-
+SET(CMAKE_CXX_STANDARD 11)
 #set(SFML_STATIC_LIBRARIES TRUE)
 
 cmake_print_variables(SFML_DIR)

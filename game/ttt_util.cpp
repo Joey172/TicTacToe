@@ -11,10 +11,12 @@ Tile DecrementTurn(Tile tile, unsigned numPlayers)
   tile = Tile((tile - 2 + numPlayers) % numPlayers + 1);
   return tile;
 }
+#include <string>
 
+#ifdef _WIN32
 #include <windows.h>
 #include <shobjidl.h>
-#include <string>
+
 
 std::string WindowsOnlyOpenFileDialog() {
   HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED |
@@ -61,4 +63,8 @@ std::string WindowsOnlyOpenFileDialog() {
   }
   return ret;
 }
-
+#else
+std::string WindowsOnlyOpenFileDialog() {
+	return "";
+}
+#endif
