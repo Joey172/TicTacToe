@@ -15,34 +15,36 @@ void Game::Init(bool newGame)
     m_hist.Init("AutoSave.txt");
   }
   else {
-    m_replayInProgress = true;
-
     m_hist.LoadFromFile(WindowsOnlyOpenFileDialog());
-    for (unsigned i = 0; i < m_hist.GetNumMoves(); i++) {
-      Update(sf::seconds(0));
-      sf::Event event;
-      while (m_window->pollEvent(event)) {
-        if (event.type == sf::Event::Closed) {
-          m_running = false;
-          m_window->close();
-        }
-        if (event.type == sf::Event::Resized) {
-          if (event.size.width != m_width)
-            Resize(event.size.width, event.size.height);
-        }
-        if (event.type == sf::Event::MouseButtonPressed && m_victor == NONE) {
-        }
-      }
-      play_t loadedPlay = m_hist.GetMove(i);
-      m_subboards[loadedPlay.majorPos.x][loadedPlay.majorPos.y].Play(loadedPlay.tile, loadedPlay.minorPos.x, loadedPlay.minorPos.y);
-      float currMove = float(m_hist.GetCurrMove());
-      float numMoves = float(m_hist.GetNumMoves());
-      float speed = std::pow(currMove / numMoves, 2);
-      sf::sleep(sf::seconds(1 * speed));
-      Draw();
-      m_running = true;
-    }
+    m_replayInProgress = true;
   }
+
+    
+  for (unsigned i = 0; i < m_hist.GetNumMoves(); i++) {
+    Update(sf::seconds(0));
+    sf::Event event;
+    while (m_window->pollEvent(event)) {
+      if (event.type == sf::Event::Closed) {
+        m_running = false;
+        m_window->close();
+      }
+      if (event.type == sf::Event::Resized) {
+        if (event.size.width != m_width)
+          Resize(event.size.width, event.size.height);
+      }
+      if (event.type == sf::Event::MouseButtonPressed && m_victor == NONE) {
+      }
+    }
+    play_t loadedPlay = m_hist.GetMove(i);
+    m_subboards[loadedPlay.majorPos.x][loadedPlay.majorPos.y].Play(loadedPlay.tile, loadedPlay.minorPos.x, loadedPlay.minorPos.y);
+    float currMove = float(m_hist.GetCurrMove());
+    float numMoves = float(m_hist.GetNumMoves());
+    float speed = std::pow(currMove / numMoves, 2);
+    sf::sleep(sf::seconds(1 * speed));
+    Draw();
+
+  }
+  m_running = true;
 
   m_turn = CROSS;
   m_prevTurn = Tile(g_numPlayers);

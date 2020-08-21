@@ -49,7 +49,7 @@ private:
   GameButton m_btnBack;
   GameButton m_txtConfirm;
   GameButton m_btnYes, m_btnNo;
-  bool m_exit;
+  bool m_exit = false;
 
   vector <GameButton*> m_uiButtons;
 
