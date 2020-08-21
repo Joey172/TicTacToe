@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
-#include <SFML\Network.hpp>
+#include <SFML/Network.hpp>
 #include <memory>
 #include <thread>
 #include "GameSettings.h"

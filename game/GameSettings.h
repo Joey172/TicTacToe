@@ -1,5 +1,5 @@
 #pragma once
-#include <SFML\Config.hpp>
+#include <SFML/Config.hpp>
 #include <string>
 #include <vector>
 // These structures are common to both game and server.
