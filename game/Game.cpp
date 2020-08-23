@@ -471,20 +471,20 @@ void Game::Draw()
     m_window->draw(sqrboi);
 
     if (m_isOnline && m_currPlayer!= nullptr) {
-      sf::RectangleShape nameTagBG;
-      sf::Text nameTag;
-      sqrboi.setFillColor(sf::Color::Transparent);
-      nameTagBG.setFillColor(colorboi);
-      nameTagBG.setOutlineColor(colorboi);
-      nameTagBG.setPosition(pos);
-      nameTagBG.setSize({ 40,14 });
-      nameTag.setFont(*g_tahoma);
-      if (m_currPlayer->name != "")
-        nameTag.setString(m_currPlayer->name);
-      nameTag.setScale({ 0.4f,0.4f });
-      nameTag.setPosition(pos );
-      m_window->draw(nameTagBG);
-      m_window->draw(nameTag);
+      //sf::RectangleShape nameTagBG;
+      //sf::Text nameTag;
+      //sqrboi.setFillColor(sf::Color::Transparent);
+      //nameTagBG.setFillColor(colorboi);
+      //nameTagBG.setOutlineColor(colorboi);
+      //nameTagBG.setPosition(pos);
+      //nameTagBG.setSize({ 40,14 });
+      //nameTag.setFont(*g_tahoma);
+      //if (m_currPlayer->name != "")
+      //  nameTag.setString(m_currPlayer->name);
+      //nameTag.setScale({ 0.4f,0.4f });
+      //nameTag.setPosition(pos );
+      //m_window->draw(nameTagBG);
+      //m_window->draw(nameTag);
     }
   } else {
     //sqrboi.setPosition(m_subboards[0][0].GetPos().x,
