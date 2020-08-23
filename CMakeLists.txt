@@ -7,4 +7,5 @@ project ("TicTacToe")
 
 # Include sub-projects.
 add_subdirectory ("game")
-add_subdirectory ("server")
+add_subdirectory ("server_singlegame")
+add_subdirectory ("server_multigame")

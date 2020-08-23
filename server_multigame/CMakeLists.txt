@@ -5,7 +5,7 @@ include(CMakePrintHelpers)
 
 cmake_minimum_required (VERSION 3.8)
 
-project(server)
+project(server_multigame)
 
 if(MSVC)
   set(SFML_STATIC_LIBRARIES TRUE)
@@ -14,15 +14,15 @@ endif(MSVC)
 find_package(SFML 2.5 COMPONENTS graphics network window network system REQUIRED)
 
 # Add source to this project's executable.
-add_executable (server 
+add_executable (server_multigame 
 	server_main.cpp server.h 
 	"./../game/ttt_util.cpp" #Files from game
 	"./../game/ttt_util.h"
 	"./../game/History.cpp"
 	"./../game/History.h")
 
-target_link_libraries(server sfml-graphics sfml-window sfml-network)
-target_include_directories(server PRIVATE SFML_DIR)
+target_link_libraries(server_multigame sfml-graphics sfml-window sfml-network)
+target_include_directories(server_multigame PRIVATE SFML_DIR)
 
 
 # TODO: Add tests and install targets if needed.
