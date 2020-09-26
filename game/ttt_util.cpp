@@ -17,7 +17,6 @@ Tile DecrementTurn(Tile tile, unsigned numPlayers)
 #include <windows.h>
 #include <shobjidl.h>
 
-
 std::string WindowsOnlyOpenFileDialog() {
   HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED |
     COINIT_DISABLE_OLE1DDE);

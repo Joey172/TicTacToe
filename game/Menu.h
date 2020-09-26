@@ -4,23 +4,44 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "GameButton.h"
+#include <map>
+#include "GUI/GameButton.h"
 #include "OnlinePlay.h"
 using namespace std;
 
+struct screen_t {
+  screen_t *Parent = nullptr;
+  std::map<string, std::shared_ptr<GameButton>> buttons;
+};
+enum ScreenState {
+  MainScreen,
+  OnlinePlaySelection,
+  SingleServerConnect,
+  Lobby,
+  PreGameLobby
+};
 
 class Menu {
 protected:
     bool m_running;
     settings_t m_settings = g_defaultSettings;
+    std::shared_ptr<Server> m_server;
     std::shared_ptr<sf::RenderWindow> m_window;
     vector<GameButton*> m_btns;
-public:
-    static void InitWindow();
-    virtual void HandleInput();
-    virtual void Update(sf::Time dt) = 0;
-    virtual void Draw();
+    std::map<string, GameButton> m_buttons;
+    std::map<ScreenState, screen_t> m_screens;
+    ScreenState m_currScreen;
 
+    vector <OnlinePlayer> m_players;
+    vector <GameButton> m_btnPlayers;
+public:
+     Menu(std::shared_ptr<sf::RenderWindow> win);
+    static void InitWindow();
+    virtual void Init(std::shared_ptr<Server> server);
+    virtual void HandleInput();
+    virtual void Update(sf::Time dt) ;
+    virtual void Draw();
+    
     bool IsRunning() {
         return m_running;
     }
@@ -84,7 +105,6 @@ class OnlineMenu : public Menu {
     } m_srvStatus;
 
 public:
-
     OnlineMenu(std::shared_ptr<sf::RenderWindow>, vector<shared_ptr<sf::Texture>>);
     ~OnlineMenu();
     void Init(std::shared_ptr<Server> server);
@@ -92,6 +112,5 @@ public:
     virtual void HandleInput() override;
     void Update(sf::Time dt);
     virtual void Draw() override;
-
 };
 

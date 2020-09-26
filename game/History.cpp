@@ -65,7 +65,9 @@ bool History::LoadFromFile(string fileName)
     cout << m_numMoves << " number of moves to load" << endl;
     m_saveFile.open("CURRENT_GAME.TicTacToe", fstream::in);
   }
+
   Tile currTurn = Tile::CROSS;
+
   while (!m_saveFile.eof()) {
     play_t loadedMove = { {0,0},{0,0},Tile::NONE, false };
     string moveEntry;

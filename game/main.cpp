@@ -26,16 +26,25 @@ float g_fboardHeight = float(g_boardHeight);
 float g_widthByHeight = g_boardWidth / g_boardHeight;
 unsigned g_numPlayers = 2;
 sf::Font *g_tahoma;
+
+#if defined WIN32 && defined NDEBUG
+int WinMain()
+#else
 int main()
+#endif
+
 {
   settings_t gameSettings = g_defaultSettings;
   vector<shared_ptr<sf::Texture>> tileTextures;
 
   std::shared_ptr<sf::RenderWindow> 
     mainWindow( new sf::RenderWindow({ 300, 300 }, "Tic Tac Toe"));
+
+  
   //Load font
   g_tahoma = new sf::Font();
   g_tahoma->loadFromFile("./assets/font.ttf");
+
   // load tile textures
   // insert blank tile.
   tileTextures.push_back(make_shared<sf::Texture>());
@@ -75,10 +84,13 @@ int main()
   timer.restart();
 
   bool runMenu = true;
+
+  Menu menu(mainWindow);
+  menu.Init(server);
   do { 
     mainWindow->setSize({ 300,300 });
-    mainWindow->setView(mainWindow->getDefaultView());
-    currentMenu = &mainMenu;
+    //mainWindow->setView(mainWindow->getDefaultView());
+    currentMenu = &menu;
 
     while (runMenu) { // MENU LOOP
       menuEvent = Menu::Event::NONE;
@@ -134,7 +146,7 @@ int main()
       sf::sleep(sf::milliseconds(16) - timer.getElapsedTime());
       dt = timer.restart();
     }
-
+    runMenu = false;
     if (mainWindow->isOpen()) { // if the window is open,  go back to menu.
       runMenu = true;
     }

@@ -2,6 +2,7 @@
 #include <math.h>
 #include "Menu.h"
 #include "GameSettings.h"
+#include "GUI/EditBox.h"
 using namespace std;
 
 extern unsigned g_boardWidth, g_boardHeight;
@@ -11,6 +12,11 @@ extern float g_widthByHeight;
 extern unsigned g_numPlayers;
 extern sf::Font* g_tahoma;
 
+Menu::Menu(std::shared_ptr<sf::RenderWindow> win)
+  : m_window(win)
+{
+}
+
 //sf::RenderWindow* Menu::m_window = nullptr;
 void Menu::InitWindow()
 {
@@ -18,8 +24,150 @@ void Menu::InitWindow()
   //m_window->create({ 300, 300 }, "TicTacToe");
 }
 
-MainMenu::MainMenu(std::shared_ptr<sf::RenderWindow> pwin)
+void Menu::Init(std::shared_ptr<Server> server) {
+  m_server = server;
+
+  m_screens.emplace(MainScreen, screen_t());
+  m_screens.emplace(NameEntry, screen_t());
+  m_screens.emplace(IPEntry, screen_t());
+  m_screens.emplace(OnlinePlaySelection, screen_t());
+
+  m_currScreen = MainScreen;//&m_screens[MainMenu];
+
+  m_screens[MainScreen].Parent = nullptr;
+
+  { // Main Menu buttons
+    m_screens[MainScreen].buttons.emplace("NewGame",    new GameButton{ "New Game -", { 20, 20 } });
+    m_screens[MainScreen].buttons.emplace("Resume",     new GameButton{ "Resume Game", { 20, 70 } });
+    m_screens[MainScreen].buttons.emplace("Online",     new GameButton{ "Online Play", { 20, 180 } });
+    m_screens[MainScreen].buttons.emplace("Width",      new GameButton{ "0", { 195, 20 } });
+    m_screens[MainScreen].buttons.emplace("Height",     new GameButton{ "0", { 230, 20 } });
+    m_screens[MainScreen].buttons.emplace("NumPlayers", new GameButton{ "0", { 250, 20 } });
+  }
+  
+  {
+    m_screens[SingleServerConnect].buttons.emplace("NamePrompt",  new GameButton{ "Enter Name:", { 25, 15 } });
+    m_screens[SingleServerConnect].buttons.emplace("NameInput",   new TextInput { "", { 30, 50 },220.f });
+    m_screens[SingleServerConnect].buttons.emplace("IPPrompt", new GameButton{ "Enter IP", { 25, 95 } });
+    m_screens[SingleServerConnect].buttons.emplace("IPInput", new TextInput{ "", { 30, 130 }, 220.f });
+  }
+  {
+    m_screens[OnlinePlaySelection].buttons.emplace("EnterLobby", new GameButton{ "Enter Online Lobby", {25,15} });
+    m_screens[OnlinePlaySelection].buttons.emplace("HostIPGame", new GameButton{ "Host IP Game", {25,50} });
+    m_screens[OnlinePlaySelection].buttons.emplace("JoinIPGame", new GameButton{ "Join IP Game", {25,85} });
+  }
+  m_event = Event::NONE;
+  ////IP Entry, appears after name entry.
+  //// Common Controls
+  //m_btnNewGame.SetText("Start Game");
+  //m_btnNewGame.SetPosition(70, 50);
+  //m_btnNewGame.SetActive(false);
+  //// Server Controls
+  //
+  //// Settings Controls
+  //m_btnChangeWidth.SetText("0");
+  //m_btnChangeWidth.SetPosition(95, 20);
+  //m_btnChangeWidth.SetActive(false);
+  //
+  //m_btnChangeHeight.SetText("0");
+  //m_btnChangeHeight.SetPosition(130, 20);
+  //m_btnChangeHeight.SetActive(false);
+  //
+  //m_btnChangeNumPlayers.SetText("");
+  //m_btnChangeNumPlayers.SetPosition(150, 20);
+  //m_btnChangeNumPlayers.SetActive(false);
+  //
+  //m_btnBack.SetText("Back");
+  //m_btnBack.SetPosition(10, 240);
+  //
+  //m_txtStatus.SetText("Status:");
+  //m_txtStatus.SetPosition(4, 4);
+  //m_txtStatus.SetActive(true);
+  //m_txtStatus.SetHowBigItIs(15);
+  //m_btnStatus.SetText("");
+  //m_btnStatus.SetPosition(100, 4);
+  //m_btnStatus.SetActive(true);
+  //m_btnStatus.SetHowBigItIs(15);
+  m_running = true;
+}
+
+void Menu::HandleInput()
 {
+  sf::Event event;
+
+  while (m_window->pollEvent(event)) {
+    if (event.type == sf::Event::Closed) {
+      m_running = false;
+      m_window->close();
+    }
+
+    sf::Vector2f mousePos = {
+      mousePos.x = float(sf::Mouse::getPosition(*m_window).x),
+      mousePos.y = float(sf::Mouse::getPosition(*m_window).y) };
+
+    for (auto& btn : m_screens[m_currScreen].buttons) {
+      btn.second->HandleInput(event, mousePos);
+    }
+  }
+}
+void Menu::Update(sf::Time dt)
+{
+  m_event = Event::NONE;
+  for (auto& btn : m_screens[m_currScreen].buttons) {
+    btn.second->Update();
+  }
+ 
+  switch (m_currScreen) {
+  case ScreenState::MainScreen:
+    if (m_screens[MainScreen].buttons["Online"]->WasClicked()) {
+      m_currScreen = ScreenState::OnlinePlaySelection;
+    }
+    else if (m_screens[MainScreen].buttons["Resume"]->WasClicked()) {
+      m_event = RESUME_GAME;
+    }
+    else if (m_screens[MainScreen].buttons["NewGame"]->WasClicked()) {
+      m_event = NEW_GAME;
+    }
+    break;
+  case ScreenState::OnlinePlaySelection:
+    if (m_screens[OnlinePlaySelection].buttons["JoinIPGame"]->WasClicked()) {
+      m_currScreen = ScreenState::SingleServerConnect;
+    }
+    break;
+  case ScreenState::SingleServerConnect: {
+    if (((TextInput*)m_screens[SingleServerConnect].buttons["IPInput"].get())->IsReady()
+      && ((TextInput*)m_screens[SingleServerConnect].buttons["NameInput"].get())->IsReady()) {
+
+      bool succ = m_server->Connect(sf::IpAddress(m_screens[SingleServerConnect].buttons["IPInput"]->GetText()), m_screens[SingleServerConnect].buttons["NameInput"]->GetText());
+      if (succ) {
+        m_currScreen = ScreenState::PreGameLobby;
+      }
+    }
+    break;
+  }
+  }
+}
+void Menu::Draw()
+{
+  m_window->clear();
+
+
+  for (auto& btn : m_screens[m_currScreen].buttons) {
+    btn.second->Draw(m_window.get());
+  }
+
+  m_window->display();
+}
+
+settings_t Menu::GetSettings()
+{
+  return m_settings;
+}
+
+
+MainMenu::MainMenu(std::shared_ptr<sf::RenderWindow> pwin) : Menu(pwin)
+{
+  
   m_window = pwin;
   m_event = MainMenu::Event::NONE;
   m_btnNewGame.SetText("New Game -");
@@ -33,7 +181,7 @@ MainMenu::MainMenu(std::shared_ptr<sf::RenderWindow> pwin)
 
   m_btnChangeWidth.SetText("0");
   m_btnChangeWidth.SetPosition(195, 20);
-  m_btnChangeWidth.SetActive(true);
+  m_btnChangeWidth.SetEnabled(true);
   m_btnChangeHeight.SetText("0");
   m_btnChangeHeight.SetPosition(230, 20);
 
@@ -56,28 +204,8 @@ MainMenu::~MainMenu()
 {
 }
 
-void Menu::HandleInput()
-{
-  sf::Event event;
-  while (m_window->pollEvent(event)) {
-    if (event.type == sf::Event::Closed) {
-      m_running = false;
 
-      m_window->close();
-    }
 
-    if (event.type == sf::Event::MouseButtonPressed) {
-      sf::Vector2f pos = { -1,-1 };
-
-      pos.x = float(sf::Mouse::getPosition(*m_window).x);
-      pos.y = float(sf::Mouse::getPosition(*m_window).y);
-
-      for (auto& btn : m_btns) {
-        btn->HandleInput(pos);
-      }
-    }
-  }
-}
 
 struct boardSetting {
   unsigned width;
@@ -125,25 +253,12 @@ void MainMenu::Update(sf::Time dt) {
   m_btnChangeNumPlayers.SetText(to_string(m_settings.numPlayers) + "p");
 }
 
-void Menu::Draw()
-{
-  m_window->clear();
-  for (auto& btn : m_btns) {
-    btn->Draw(m_window.get());
-  }
 
-  m_window->display();
-}
-
-settings_t Menu::GetSettings()
-{
-  return m_settings;
-}
 
 
 
 OnlineMenu::OnlineMenu(std::shared_ptr<sf::RenderWindow> gameWin, vector<shared_ptr<sf::Texture>> tileTextures) 
-    : m_tileTextures(tileTextures) {
+    : Menu(gameWin), m_tileTextures(tileTextures){
   m_window = gameWin;
   m_btns.push_back(&m_txtName);
 
@@ -171,49 +286,51 @@ void OnlineMenu::Init(std::shared_ptr<Server> server)
   m_server = server;
   m_state = NAME_INPUT;
   m_event = OnlineMenu::Event::NONE;
+
   //Name Entry
   m_txtName.SetText("Enter Name:");
   m_txtName.SetPosition(50, 15);
-  m_txtName.SetActive(true);
-  m_btnName.SetActive(true);
+  m_txtName.SetEnabled(true);
+  m_btnName.SetEnabled(true);
   m_btnName.SetText("");
   m_btnName.SetPosition(50, 50);
 
   //IP Entry, appears after name entry.
   m_inputIP.SetText("Enter Host IP:");
   m_inputIP.SetPosition(50, 15);
-  m_inputIP.SetActive(false);
+  m_inputIP.SetEnabled(false);
   m_btnIPBox.SetText("");
   m_btnIPBox.SetPosition(50, 50);
-  m_btnIPBox.SetActive(false);
+  m_btnIPBox.SetEnabled(false);
   // Common Controls
   m_btnNewGame.SetText("Start Game");
   m_btnNewGame.SetPosition(70, 50);
-  m_btnNewGame.SetActive(false);
+  m_btnNewGame.SetEnabled(false);
+  // Server Controls
 
   // Settings Controls
   m_btnChangeWidth.SetText("0");
   m_btnChangeWidth.SetPosition(95, 20);
-  m_btnChangeWidth.SetActive(false);
+  m_btnChangeWidth.SetEnabled(false);
 
   m_btnChangeHeight.SetText("0");
   m_btnChangeHeight.SetPosition(130, 20);
-  m_btnChangeHeight.SetActive(false);
+  m_btnChangeHeight.SetEnabled(false);
 
   m_btnChangeNumPlayers.SetText("");
   m_btnChangeNumPlayers.SetPosition(150, 20);
-  m_btnChangeNumPlayers.SetActive(false);
+  m_btnChangeNumPlayers.SetEnabled(false);
 
   m_btnBack.SetText("Back");
   m_btnBack.SetPosition(10, 240);
 
   m_txtStatus.SetText("Status:");
   m_txtStatus.SetPosition(4, 4);
-  m_txtStatus.SetActive(true);
+  m_txtStatus.SetEnabled(true);
   m_txtStatus.SetHowBigItIs(15);
   m_btnStatus.SetText("");
   m_btnStatus.SetPosition(100, 4);
-  m_btnStatus.SetActive(true);
+  m_btnStatus.SetEnabled(true);
   m_btnStatus.SetHowBigItIs(15);
 }
 void OnlineMenu::HandleInput() {
@@ -229,10 +346,10 @@ void OnlineMenu::HandleInput() {
       { // ENTER key pressed
         switch (m_state) {
         case NAME_INPUT:
-          m_inputIP.SetActive(true);
-          m_btnIPBox.SetActive(true);
-          m_txtName.SetActive(false);
-          m_btnName.SetActive(false);
+          m_inputIP.SetEnabled(true);
+          m_btnIPBox.SetEnabled(true);
+          m_txtName.SetEnabled(false);
+          m_btnName.SetEnabled(false);
           m_name = m_btnName.GetText();
           activeTextField = &m_btnIPBox;
 
@@ -246,14 +363,14 @@ void OnlineMenu::HandleInput() {
           m_btnStatus.SetText("Connecting...");
 
           if (m_server->Connect(m_ip, m_name)) {
-            m_inputIP.SetActive(false);
-            m_btnIPBox.SetActive(false);
+            m_inputIP.SetEnabled(false);
+            m_btnIPBox.SetEnabled(false);
             m_btnBack.SetText("Disconnect");
-            m_btnNewGame.SetActive(true);
-            m_btnNewGame.SetActive(true);
-            m_btnChangeHeight.SetActive(true);
-            m_btnChangeWidth.SetActive(true);
-            m_btnChangeNumPlayers.SetActive(true);
+            m_btnNewGame.SetEnabled(true);
+            m_btnNewGame.SetEnabled(true);
+            m_btnChangeHeight.SetEnabled(true);
+            m_btnChangeWidth.SetEnabled(true);
+            m_btnChangeNumPlayers.SetEnabled(true);
             m_btnStatus.SetText("Connected to " + m_ip.toString());
 
             m_state = READY;
@@ -287,7 +404,7 @@ void OnlineMenu::HandleInput() {
       pos.y = float(sf::Mouse::getPosition(*m_window).y);
 
       for (auto& btn : m_btns) {
-        btn->HandleInput(pos);
+        //btn->HandleInput(pos);
       }
     }
   }

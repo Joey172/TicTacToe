@@ -170,7 +170,8 @@ settings_t Server::GetSettings()
 
 bool Server::Connect(sf::IpAddress &ip, string name)
 {
-  sf::Packet name_packet;
+  sf::Packet name_packet, mode_packet;
+
   if (ip == sf::IpAddress::None) {
     cout << "no ip" << endl;
     return false;
@@ -187,6 +188,9 @@ bool Server::Connect(sf::IpAddress &ip, string name)
     
     name_packet << (sf::Uint8)DATA_CONTENTS::NEW_NAME << name.c_str();
     m_connection->send(name_packet);
+
+    mode_packet << (sf::Uint8)DATA_CONTENTS::MODE_CREATE_GAME;
+    m_connection->send(mode_packet);
 
     m_listeningThread.launch();
     m_signals.send.requestSettings = true;

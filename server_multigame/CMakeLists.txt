@@ -15,7 +15,7 @@ find_package(SFML 2.5 COMPONENTS graphics network window network system REQUIRED
 
 # Add source to this project's executable.
 add_executable (server_multigame 
-	server_main.cpp server.h 
+	"server_multigame.cpp" server.h 
 	"./../game/ttt_util.cpp" #Files from game
 	"./../game/ttt_util.h"
 	"./../game/History.cpp"

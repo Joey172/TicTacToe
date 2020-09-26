@@ -10,28 +10,20 @@ enum SERVER_STATUS {
   WAITING_ON_CONNECTIONS,
   READY_TO_START,
 };
-
+constexpr Uint8 NULL_GAME = 0;
 class Client : public sf::TcpSocket {
 public:
-  Uint8 id;
-  string name;
+  Tile turn = Tile::NONE;
+  Uint8 gId = 0;
+  string name = "";
+  Uint8 gameId = NULL_GAME;
 };
-
-//enum Tile {
-//  NONE = 0, CROSS, CIRCLE, TRIANGLE,
-//};
 
 struct Point8u {
   Uint8 x;
   Uint8 y;
 };
 
-//struct play_t {
-//  Point8u majorPos;
-//  Point8u minorPos;
-//  Tile tile;
-//  Uint8 wasFreePlay;
-//};
 
 struct gameState_t {
   Tile turn;

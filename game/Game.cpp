@@ -141,20 +141,20 @@ Game::Game(std::shared_ptr<sf::RenderWindow> gameWin, vector<shared_ptr<sf::Text
   m_txtConfirm.SetPosition(540, 0);
   m_txtConfirm.SetFont(g_tahoma);
   m_txtConfirm.SetText("Are You Sure?");
-  m_txtConfirm.SetActive(false);
+  m_txtConfirm.SetEnabled(false);
   m_uiButtons.push_back(&m_txtConfirm);
 
   m_btnYes.SetPosition(540, 0);
   m_btnYes.SetFont(g_tahoma);
   m_btnYes.SetText("(Y");
-  m_btnYes.SetActive(false);
+  m_btnYes.SetEnabled(false);
   m_uiButtons.push_back(&m_btnYes);
 
 
   m_btnNo.SetPosition(540, 0);
   m_btnNo.SetFont(g_tahoma);
   m_btnNo.SetText("/ N)");
-  m_btnNo.SetActive(false);
+  m_btnNo.SetEnabled(false);
   m_uiButtons.push_back(&m_btnNo);
 
   SetActiveBoard({ 0,0 });
@@ -258,7 +258,7 @@ void Game::HandleInput()
       pos.y = float(sf::Mouse::getPosition(*m_window).y);
 
       for (auto& btn : m_uiButtons) {
-        btn->HandleInput(pos);
+        //btn->HandleInput(pos);
       }
 
 	    if (m_isOnline) {
@@ -318,20 +318,20 @@ void Game::Update(sf::Time dt) {
     DecrementTurn();
   }
   else if (m_btnBack.WasClicked()) {
-    m_btnBack.SetActive(false);
-    m_txtConfirm.SetActive(true);
-    m_btnYes.SetActive(true);
-    m_btnNo.SetActive(true);
+    m_btnBack.SetEnabled(false);
+    m_txtConfirm.SetEnabled(true);
+    m_btnYes.SetEnabled(true);
+    m_btnNo.SetEnabled(true);
     //m_exit = true;
   }
   else if (m_btnYes.WasClicked()) {
     Exit();
   }
   else if (m_btnNo.WasClicked()) {
-    m_btnBack.SetActive(true);
-    m_txtConfirm.SetActive(false);
-    m_btnYes.SetActive(false);
-    m_btnNo.SetActive(false);
+    m_btnBack.SetEnabled(true);
+    m_txtConfirm.SetEnabled(false);
+    m_btnYes.SetEnabled(false);
+    m_btnNo.SetEnabled(false);
   }
 
   if (m_isOnline) {

@@ -7,7 +7,7 @@
 
 #include "Subboard.h"
 #include "History.h"
-#include "GameButton.h"
+#include "GUI/GameButton.h"
 #include "GameSettings.h"
 #include "OnlinePlay.h"
 
