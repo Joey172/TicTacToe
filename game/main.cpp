@@ -61,22 +61,15 @@ int main()
   }
   cout << "Loaded " << i - 2 << " tiles" << endl;
 
-
-
-  Menu *currentMenu;
-  MainMenu mainMenu(mainWindow);
-  OnlineMenu serverMenu(mainWindow, tileTextures);
-
   sf::Image icon;
   if (icon.loadFromFile("./assets/icon.ico")) {
     mainWindow->setIcon(47, 47, icon.getPixelsPtr());
   }
 
-  Menu::Event menuEvent = MainMenu::Event::NONE;
+
 
   shared_ptr<Server> server;
   server.reset(new Server);
-  serverMenu.Init(server);
 
   sf::Time dt = sf::seconds(0);
   sf::Clock timer;
@@ -86,25 +79,25 @@ int main()
   bool runMenu = true;
 
   Menu menu(mainWindow);
+  Menu::Event menuEvent = Menu::Event::NONE;
   menu.Init(server);
   do { 
     mainWindow->setSize({ 300,300 });
     //mainWindow->setView(mainWindow->getDefaultView());
-    currentMenu = &menu;
 
     while (runMenu) { // MENU LOOP
       menuEvent = Menu::Event::NONE;
-      currentMenu->HandleInput();
-      currentMenu->Update(dt);
-      currentMenu->Draw();
+      menu.HandleInput();
+      menu.Update(dt);
+      menu.Draw();
 
-      menuEvent = currentMenu->m_event;
+      menuEvent = menu.m_event;
 
       switch (menuEvent) {
       case Menu::Event::NONE: default:
         break;
       case Menu::Event::RESUME_GAME: case Menu::Event::NEW_GAME: {
-        gameSettings = currentMenu->GetSettings();
+        gameSettings = menu.GetSettings();
         /////////////////////////////////////////////////
         // TODO get rid of globals
         g_boardWidth = gameSettings.board.width;
@@ -117,13 +110,6 @@ int main()
         runMenu = false;
         break;
       }
-      case Menu::Event::START_SERVER: // switch to the server menu
-        currentMenu = &serverMenu;
-        serverMenu.Init(server);
-        break;
-      case Menu::Event::MAIN_MENU: // switch to the main menu.
-        currentMenu = &mainMenu;
-        break;
       }
 
       sf::sleep(sf::milliseconds(16) - timer.getElapsedTime());
@@ -134,7 +120,7 @@ int main()
     Game game(mainWindow,tileTextures, gameSettings, server);
 
     // for to do replay
-    bool newGame = menuEvent == MainMenu::Event::NEW_GAME;
+    bool newGame = menuEvent == Menu::Event::NEW_GAME;
     game.Init(newGame);
 
 
