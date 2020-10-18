@@ -38,6 +38,12 @@ void Server::_SendHandler()
     m_connection->send(sendData);
     m_signals.send.settingsAvailable = false;
   }
+  else if (m_signals.send.joinGame) {
+    sendData << (Uint8)DATA_CONTENTS::MODE_JOIN_GAME << (Uint8)m_joinID;
+    m_connection->send(sendData);
+    m_joining = true;
+    m_signals.send.joinGame = false;
+  }
   
   m_connection->setBlocking(false);
 }
@@ -119,6 +125,33 @@ void Server::_RecieveHandler()
       m_signals.receive.namesAvailable = true;
     }
     break;
+  case DATA_CONTENTS::ALL_GAME_INFO: {
+    Uint8 numGames;
+    remoteGame_t remoteGame;
+
+    response >> numGames;
+    for (Uint8 i = 0; i < numGames; i++) {
+      response >> remoteGame.id
+        >> remoteGame.settings.board.width
+        >> remoteGame.settings.board.height
+        >> remoteGame.settings.numPlayers
+        >> (Uint8&)remoteGame.status;
+        
+      cout << "game " << (unsigned)remoteGame.id << " " 
+        << (unsigned)remoteGame.settings.board.width 
+        << "x" << (unsigned)remoteGame.settings.board.height << endl;
+
+      m_lobby.games.push_back(remoteGame);
+    }
+    m_signals.receive.gameListAvailable = true;
+    break;
+  }
+  
+  case DATA_CONTENTS::MODE_JOIN_GAME: 
+    m_joinSuccess = true;
+  case DATA_CONTENTS::MODE_JOIN_GAME_FAIL:
+    m_joining = false;
+    break;
   default: case DATA_CONTENTS::INVALID: 
     cout << "[L] Invalid response" << endl; 
     break;
@@ -136,7 +169,7 @@ void Server::_Listener()
     _SendHandler();
     _RecieveHandler();
     // nap time
-    sf::sleep(sf::milliseconds(60));
+    sf::sleep(sf::milliseconds(30));
   }
 
   cout << "Listener closing..." << endl;
@@ -189,9 +222,6 @@ bool Server::Connect(sf::IpAddress &ip, string name)
     name_packet << (sf::Uint8)DATA_CONTENTS::NEW_NAME << name.c_str();
     m_connection->send(name_packet);
 
-    mode_packet << (sf::Uint8)DATA_CONTENTS::MODE_CREATE_GAME;
-    m_connection->send(mode_packet);
-
     m_listeningThread.launch();
     m_signals.send.requestSettings = true;
     break;
@@ -207,6 +237,7 @@ bool Server::Connect(sf::IpAddress &ip, string name)
 void Server::Disconnect()
 {
   m_connection->disconnect();
+  m_lobby.games.clear();
 }
 
 bool Server::Connected()
@@ -219,6 +250,39 @@ bool Server::PlayerListAvailable()
   bool ret = m_signals.receive.namesAvailable;
   m_signals.receive.namesAvailable = false;
   return ret;
+}
+
+bool Server::GameListAvailable()
+{
+  bool ret = m_signals.receive.gameListAvailable;
+  m_signals.receive.gameListAvailable = false;
+  return ret;
+  return false;
+}
+
+Server::lobby_t* Server::GetLobby()
+{
+  return &m_lobby;
+}
+
+bool Server::JoinGame(sf::Uint8 id)
+{
+  sf::Clock timeout;
+  timeout.restart();
+
+  for (auto &game : m_lobby.games) {
+    if (game.id == id) {
+      //m_joinGame = &game;
+      m_joinID = id;
+      break;
+    }
+  }
+  m_joining = true;
+  m_signals.send.joinGame = true;
+  while (m_joining && timeout.getElapsedTime().asSeconds() < 9) {
+    cout << "Join timeout" << endl;
+  }
+  return m_joinSuccess && timeout.getElapsedTime().asSeconds() < 9;
 }
 
 std::vector<OnlinePlayer> Server::GetPlayers()

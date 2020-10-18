@@ -3,7 +3,9 @@
 #include <SFML/Network.hpp>
 #include <string>
 #include <vector>
+#include <list>
 #include <memory>
+#include <stack>
 #include <map>
 #include "GUI/GameButton.h"
 #include "OnlinePlay.h"
@@ -17,6 +19,7 @@ enum ScreenState {
   MainScreen,
   OnlinePlaySelection,
   SingleServerConnect,
+  MultiServerConnect,
   Lobby,
   PreGameLobby
 };
@@ -34,12 +37,24 @@ protected:
 
     vector <OnlinePlayer> m_players;
     vector <GameButton> m_btnPlayers;
+    list <GameButton> m_gameListBtn;
+    stack<ScreenState> m_screenHist;
+    void PushScreen(ScreenState nextScreen);
+    ScreenState PopScreen();
+    screen_t* CurrentScreen();
+
+    Menu* m_currMenu;
 public:
      Menu(std::shared_ptr<sf::RenderWindow> win);
     static void InitWindow();
+
     virtual void Init(std::shared_ptr<Server> server);
+    //setsup the current screen.
+    virtual void InitScreen(ScreenState screen);
     virtual void HandleInput();
-    virtual void Update(sf::Time dt) ;
+    virtual void Update(sf::Time dt);
+    //runs the exit procedure for the current screen
+    //virtual void UninitScreen();
     virtual void Draw();
     
     bool IsRunning() {
@@ -113,4 +128,3 @@ public:
     void Update(sf::Time dt);
     virtual void Draw() override;
 };
-

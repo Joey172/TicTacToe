@@ -14,22 +14,20 @@ typedef list<Client*> ClientList;
 //typedef std::map<std::string, game_t*> GameMap;
 typedef std::string GameCode;
 
-enum gameStatus_t {
-  WAITING_ON_PLAYERS,
-  IN_PROGRESS,
-};
+
 
 struct game_t {
   Uint8 id = NULL_GAME;
-  History *history;
+  string name = "";
+  History *history = nullptr;
   settings_t settings = g_defaultSettings;
   list<Client*> clients;
-  Tile currentTurn;
+  Tile currentTurn = Tile::NONE;
   gameStatus_t status;
 };
 
 std::vector<game_t*> games;
-// 3x3, 2p, online
+
 settings_t g_settings = g_defaultSettings;
 
 std::map<std::string, game_t*> g_gameMap;
@@ -37,6 +35,7 @@ Uint8 g_numPlayers = 0;
 Uint8 g_connection_cntr = 1;
 
 list<Client*> connections;
+list<Client*> lobby;
 
 // When a player plays a move, that play gets forwarded to all other users.
 void HandlePlayMade(game_t *game, Client *clientThatPlayed, sf::Packet move) {
@@ -62,7 +61,8 @@ void HandlePlayMade(game_t *game, Client *clientThatPlayed, sf::Packet move) {
       continue;
     client->send(move);
   }
-  game->history->logPlay(play);
+  if(game->history != nullptr)
+    game->history->logPlay(play);
   game->currentTurn = IncrementTurn(game->currentTurn, game->settings.numPlayers);
 }
 
@@ -81,7 +81,23 @@ void SendPlayerList(game_t *game) {
     client->send(AllPlayerInfo);
   }
 }
+void SendJoinConfirm(Client* client) {
+  sf::Packet joinConfirm;
+  joinConfirm << (Uint8)MODE_JOIN_GAME;
+  client->send(joinConfirm);
+}
+void SendGameList(Client* client) {
+  sf::Packet gameList;
+  gameList << (Uint8)ALL_GAME_INFO;
+  gameList << (Uint8)games.size();
 
+  for (auto& game : games) {
+    gameList << (Uint8)game->id;
+    gameList << game->settings.board.width << game->settings.board.height << game->settings.numPlayers;
+    gameList << game->status;
+  }
+  client->send(gameList);
+}
 //update client's currently selected game settings.
 void SendGameSettings(game_t *game, Client *client) {
   sf::Packet GameSettings;
@@ -110,12 +126,12 @@ void SendID(Client *client) {
 /*
 Handles the reciept of packets
 */
-bool handlePacket (game_t* game, Client *client, sf::Packet &packet) {
+bool handlePacket (game_t* game, Client* client, sf::Packet& packet) {
   size_t dataSize = packet.getDataSize();
-  Uint8 *data = new Uint8[dataSize];
+  Uint8* data = new Uint8[dataSize];
   bool valid = false;
   Uint8 contents = DATA_CONTENTS::INVALID;
-  
+
   packet >> contents;
   cout << " processing packet (size: " << dataSize << "b, type: " << hex << (int)contents << ")..." << endl;
   memcpy(data, packet.getData(), dataSize);
@@ -129,10 +145,10 @@ bool handlePacket (game_t* game, Client *client, sf::Packet &packet) {
     for (size_t i = 0; i < dataSize; i++) cout << data[i];
     cout << endl;
   }
-  
+
   switch (contents) {
-  case DATA_CONTENTS::REQUEST_SETTINGS: 
-    SendGameSettings(game, client); 
+  case DATA_CONTENTS::REQUEST_SETTINGS:
+    SendGameSettings(game, client);
     break;
   case DATA_CONTENTS::NEW_NAME:
     packet >> client->name;
@@ -142,7 +158,7 @@ bool handlePacket (game_t* game, Client *client, sf::Packet &packet) {
     cout << "play location" << endl;
     HandlePlayMade(game, client, packet);
     break;
-  case DATA_CONTENTS::START_GAME: 
+  case DATA_CONTENTS::START_GAME:
     StartGame(game);
     break;
   case DATA_CONTENTS::SETTINGS_CHANGE:
@@ -153,24 +169,33 @@ bool handlePacket (game_t* game, Client *client, sf::Packet &packet) {
     break;
   case DATA_CONTENTS::MODE_CREATE_GAME:
     cout << "New created by " << client->name << "!" << endl;
-    
+
     games.push_back(new game_t);
     cout << "Game ID: " << games.size() - 1;
     games.back()->clients.push_back(client);
     games.back()->id = games.size() - 1;
     games.back()->history = new History();
     games.back()->history->Init("Game" + to_string(games.size() - 1));
-    
+
     client->gameId = games.size() - 1;
 
     break;
-  case DATA_CONTENTS::MODE_JOIN_GAME:
-    
+  case DATA_CONTENTS::MODE_JOIN_GAME: {
+    Uint8 gameId;
+    packet >> gameId;
+
+    if (gameId > games.size()) {
+      break;
+    }
+    lobby.remove(client);
+    cout << "Client " << client->name << " joining game " << gameId << endl;
+    games[gameId]->clients.push_back(client);
+    SendJoinConfirm(client);
     break;
   }
-
+  }
   delete[] data;
-	return true;
+  return true;
 }
 bool handleNewClient(Client* client) {
   cout << " - connection established with client " << client->getRemoteAddress() << endl;
@@ -194,7 +219,14 @@ int main() {
 	sf::TcpListener listener;
   queue<Uint8> disconnectedIDs;
 	SERVER_STATUS status = SERVER_STATUS::WAITING_ON_CONNECTIONS;
-
+  game_t dummyGame;
+  game_t dummyGame1;
+  game_t dummyGame2;
+  games.push_back(&dummyGame);
+  games.push_back(&dummyGame1);
+  games.push_back(&dummyGame2);
+  dummyGame1.id = 1;
+  dummyGame2.id = 2;
 	listener.listen(4967);
 	selector.add(listener);
 
@@ -214,19 +246,17 @@ int main() {
           client->receive(name_packet);
           handlePacket(nullptr, client, name_packet);
 
-          client->receive(mode_packet);
-          handlePacket(nullptr, client, mode_packet);
-
+          SendGameList(client);
           selector.add(*client);
           connections.push_back(client);
-
+          
+          lobby.push_back(client);
           handleNewClient(client);
 				} 
         if (!valid) {
 					cout << "connection failed" << endl;
 					delete client;
 				}
-        
 			}
 			else { // a client is ready
 				for (auto client : connections) {
@@ -237,7 +267,6 @@ int main() {
               continue; //Invalid ID.
             }
 						
-            
 						sf::Packet packet;
             sf::Socket::Status packet_status;
             packet_status = client->receive(packet);
@@ -249,7 +278,6 @@ int main() {
               cout << client->name << " has disconnected!" << endl;
 
               disconnectedIDs.push(client->turn);
-
               selector.remove(*client);
               connections.remove(client);
 

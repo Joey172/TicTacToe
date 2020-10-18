@@ -17,22 +17,30 @@ struct settings_t {
 
 bool operator==(const settings_t& lhs, const settings_t& rhs);
 bool operator!=(const settings_t& lhs, const settings_t& rhs);
+
 // 3x3, 2p, not online
 constexpr settings_t g_defaultSettings = { { 3,3 }, 2, false };
-
+constexpr size_t MAX_NAME_LEN = 16;
 enum DATA_CONTENTS : sf::Uint8 {
-  INVALID = 99,
-  // menu commands
-	SETTINGS_CHANGE   = 0x31,  // sent to notify setting change.
-  REQUEST_SETTINGS  = 0x32,  // sent to request current settings
-	START_GAME        = 0x35,  // sent to indicate the game is ready to start
-  PLAYER_ID         = 0x34,  // data will contain player id
-  NEW_NAME          = 0x38,  // data will contain string
-  ALL_PLAYER_INFO   = 0x81,  // data will contain # of players and the gid/id/name of each player
-	
-	MODE_CREATE_GAME  = 0x85,
-	MODE_JOIN_GAME    = 0x86,
-  // game commands
-	PLAY_LOCATION     = 0x77,  // data will contain play_t.
-	HOVER_LOCATION     = 0x78, // data will contain play_t.
+	INVALID = 99,
+	// menu commands
+	SETTINGS_CHANGE = 0x31,  // sent to notify setting change.
+	REQUEST_SETTINGS = 0x32,  // sent to request current settings
+	START_GAME = 0x35,  // sent to indicate the game is ready to start
+	PLAYER_ID = 0x34,  // data will contain player id
+	NEW_NAME = 0x38,  // data will contain string
+	ALL_PLAYER_INFO = 0x81,  // data will contain # of players and the gid/id/name of each player
+	ALL_GAME_INFO = 0x82,  // data will contain array
+	MODE_CREATE_GAME = 0x85,
+	MODE_JOIN_GAME = 0x86,
+	MODE_JOIN_GAME_FAIL = 0x87,
+	// game commands
+	PLAY_LOCATION = 0x77,  // data will contain play_t.
+	HOVER_LOCATION = 0x78, // data will contain play_t.
+	HISTORY = 0x73,				// data will contain # of moves, followed by a stream of moves
+};
+
+enum gameStatus_t : sf::Uint8 {
+	WAITING_ON_PLAYERS,
+	IN_PROGRESS,
 };

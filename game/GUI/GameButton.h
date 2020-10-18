@@ -2,6 +2,16 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <functional>
+class Gui {
+public:
+  enum Style : int {
+    NONE        = 0,
+    BORDER      = 1 << 0,
+    BOLD        = 1 << 1,
+    UNDERLINE   = 1 << 2,
+    SEL_BORDER  = 1 << 3, // has border only when selected
+  };
+};
 
 class GameButton {
 protected:
@@ -16,10 +26,12 @@ protected:
   bool m_isClicked = false;
   bool m_wasClicked = false;
   bool m_enabled = true;
-  static GameButton* m_activeBtn;
-  
+  static GameButton* s_activeBtn;
+  static GameButton* s_hoverBtn;
+  Gui::Style m_style = Gui::Style::NONE;
   //function<void(void)> *onClick;
 public:
+  void* userData = nullptr;
   static void SetActiveButton(GameButton*);
   static GameButton* GetActiveButton(void);
 
@@ -27,7 +39,7 @@ public:
   static GameButton* GetHoverButton(void);
 
   GameButton(std::string title, sf::Font *pFont);
-  GameButton(std::string title, sf::Vector2f pos, bool enabled = true);
+  GameButton(std::string title, sf::Vector2f pos, Gui::Style style = Gui::Style::NONE, bool enabled = true);
   GameButton();
 
   virtual void HandleInput(sf::Event event, sf::Vector2f mousePos = {0,0});
@@ -40,14 +52,19 @@ public:
   std::string GetText();
   void SetEnabled(bool);
   bool IsEnabled();
-  bool IsActive();
+  bool IsSelected();
   void SetFont(sf::Font *pFont);
   void SetHowBigItIs(unsigned bigness);
   void SetColor(sf::Color color);
 
-
+  void SetStyle(Gui::Style style);
+  void AddStyle(Gui::Style style);
+  void RemoveStyle(Gui::Style style);
+  bool HasStyle(Gui::Style style);
   // Returns if the button has been clicked since the last call to the function
-  // if @reset=false, a subsequent call will return true
+  // if reset=false and the button was clicked, a subsequent call will still return true
   bool WasClicked(bool reset = true);
+
+  bool WasHovered(bool reset = true);
 };
 

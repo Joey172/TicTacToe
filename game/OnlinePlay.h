@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <list>
 #include <SFML/Network.hpp>
 #include <memory>
 #include <thread>
@@ -10,6 +11,11 @@ struct OnlinePlayer {
   sf::Uint8 id;
   std::string name;
 };
+struct remoteGame_t {
+  sf::Uint8 id;
+  settings_t settings;
+  gameStatus_t status;
+};
 class Server {
 public:
   enum Status {
@@ -17,16 +23,25 @@ public:
     READY_TO_START,
     GAME_IN_PROGRESS
   };
+  struct lobby_t {
+    std::list<remoteGame_t> games;
+  };
 protected:
+  lobby_t m_lobby;
+  remoteGame_t *m_joinGame;
+  bool m_joining = false;
+  bool m_joinSuccess = false;
+  sf::Uint8 m_joinID;
   // settings recieved by server. only changed by receipt of SETTINGS_CHANGE
   settings_t m_receivedSettings = g_defaultSettings;
   // proposed settings change.
   settings_t m_changedSettings = g_defaultSettings;
-  sf::Uint8 m_numPlayers;
+
+  sf::Uint8 m_numPlayers = 0;
   std::vector<OnlinePlayer> m_players;
   std::shared_ptr<sf::TcpSocket> m_connection;
-  sf::Thread  m_listeningThread;
-  Status m_status;
+  sf::Thread m_listeningThread;
+  Status m_status = WAITING_FOR_PLAYERS;
 
   int m_assignedTurn = 0;
   bool m_connected = false;
@@ -35,12 +50,16 @@ protected:
 
   struct signals_t {
     struct {
+      bool success = false;
       bool clientReady = false;
       bool moveAvailable = false;
       bool requestSettings = false;
       bool settingsAvailable = false;
       bool startGame = false;
       bool namesAvailable = false;
+      bool gameListAvailable = false;
+      bool joinGame = false;
+      bool joinGameFail = false;
     } send, receive;
   } m_signals;
   // handles sending all data to server. runs on listener thread
@@ -60,6 +79,10 @@ public:
   bool Connected();
 
   bool PlayerListAvailable();
+  bool GameListAvailable();
+
+  lobby_t *GetLobby();
+  bool JoinGame(sf::Uint8 id);
   std::vector<OnlinePlayer> GetPlayers();
 
   // tell server to change the settings of the game.
